@@ -1,0 +1,192 @@
+﻿@model EventManagement.UI.Models.EventDetailViewModel
+
+@{
+    ViewData["Title"] = "Etkinlik Detayı";
+}
+
+<h2 class="d-flex justify-content-between align-items-center">
+    <span id="eventTitle">@Model.Title</span>
+    <button class="btn btn-sm btn-outline-primary d-flex align-items-center gap-1"
+            data-bs-toggle="modal" data-bs-target="#editEventModal">
+        <i class="bi bi-pencil-square"></i>
+        <span>Düzenle</span>
+    </button>
+
+</h2>
+<p><strong>Tarih:</strong> @Model.Date.ToString("dd.MM.yyyy")</p>
+<p><strong>Yer:</strong> @Model.Location</p>
+<p><strong>Açıklama:</strong> @Model.Description</p>
+
+<hr />
+<h4 class="d-flex justify-content-between align-items-center">
+    Katılımcılar
+    <button class="btn btn-sm btn-success" onclick="toggleAddParticipant()">Yeni Katılımcı Ekle</button>
+</h4>
+
+<div id="addParticipantPanel" class="border p-3 mb-3 rounded" style="display: none;">
+    <form id="addParticipantForm">
+        <div id="participantCheckboxList">Yükleniyor...</div>
+        <button type="submit" class="btn btn-primary btn-sm mt-2">Ekle</button>
+    </form>
+</div>
+
+<div id="participantList">Yükleniyor...</div>
+
+<a href="/" class="btn btn-secondary mt-3">Geri Dön</a>
+
+<!-- Modal for editing event info -->
+<div class="modal fade" id="editEventModal" tabindex="-1" aria-labelledby="editEventModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editEventModalLabel">Etkinliği Düzenle</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editEventForm">
+                    <div class="mb-3">
+                        <label for="titleInput" class="form-label">Başlık</label>
+                        <input type="text" class="form-control" id="titleInput" required value="@Model.Title">
+                        <div class="invalid-feedback">Başlık boş olamaz.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="dateInput" class="form-label">Tarih</label>
+                        <input type="date" class="form-control" id="dateInput" required value="@Model.Date.ToString("yyyy-MM-dd")">
+                        <div class="invalid-feedback">Tarih seçiniz.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="locationInput" class="form-label">Yer</label>
+                        <input type="text" class="form-control" id="locationInput" required value="@Model.Location">
+                        <div class="invalid-feedback">Yer boş olamaz.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="descriptionInput" class="form-label">Açıklama</label>
+                        <textarea class="form-control" id="descriptionInput" required>@Model.Description</textarea>
+                        <div class="invalid-feedback">Açıklama boş olamaz.</div>
+                    </div>
+                </form>
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Kapat</button>
+                <button type="button" class="btn btn-primary" onclick="submitEditEvent()">Güncelle</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/site.js"></script>
+    <script>
+        const eventId = '@Model.Id';
+
+        function loadParticipants() {
+            $("#participantList").load(`/Events/LoadParticipants?id=${eventId}`);
+        }
+
+        function toggleAddParticipant() {
+            const panel = $("#addParticipantPanel");
+            if (panel.is(":visible")) {
+                panel.hide();
+            } else {
+                panel.show();
+                loadAllParticipantsForSelection();
+            }
+        }
+
+        function loadAllParticipantsForSelection() {
+            $.get("/Participants/GetAll", function (data) {
+                const container = $("#participantCheckboxList");
+                container.empty();
+
+                // Etkinlikteki mevcut katılımcı ID'lerini topla
+                const existingIds = [];
+                $("#participantList li button").each(function () {
+                    const id = $(this).attr("onclick").match(/'(.*?)'/)[1];
+                    existingIds.push(id);
+                });
+
+                // Sadece eklenmemiş olanları göster
+                const filtered = data.filter(p => !existingIds.includes(p.id));
+
+                if (filtered.length === 0) {
+                    container.html("<div class='text-muted'>Tüm katılımcılar zaten eklenmiş.</div>");
+                    return;
+                }
+
+                filtered.forEach(p => {
+                    const checkbox = `
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="${p.id}" id="chk-${p.id}" name="selectedParticipantIds" />
+                            <label class="form-check-label" for="chk-${p.id}">
+                                ${p.fullName} - ${p.email}
+                            </label>
+                        </div>`;
+                    container.append(checkbox);
+                });
+            });
+        }
+
+        $("#addParticipantForm").on("submit", function (e) {
+            e.preventDefault();
+
+            const selected = [];
+            $("input[name='selectedParticipantIds']:checked").each(function () {
+                selected.push($(this).val());
+            });
+
+            addParticipants(eventId, selected, () => {
+                loadParticipants();
+                $("#addParticipantPanel").hide();
+            });
+        });
+
+        window.removeParticipantUI = function (participantId) {
+            removeParticipant(eventId, participantId, () => {
+                loadParticipants();
+            });
+        };
+
+        $(document).ready(function () {
+            loadParticipants();
+        });
+
+        function submitEditEvent() {
+            const form = document.getElementById("editEventForm");
+
+            if (!form.checkValidity()) {
+                form.classList.add("was-validated");
+                return;
+            }
+
+            const updatedData = {
+                title: $("#titleInput").val(),
+                date: $("#dateInput").val(),
+                location: $("#locationInput").val(),
+                description: $("#descriptionInput").val()
+            };
+
+            $.ajax({
+                url: `${apiBaseUrl}/events/${eventId}`,
+                type: "PUT",
+                contentType: "application/json",
+                data: JSON.stringify(updatedData),
+                success: function () {
+                    // Sayfa üzerindeki alanları anlık güncelle
+                    $("#eventTitle").text(updatedData.title);
+                    $("#eventDate").text(new Date(updatedData.date).toLocaleDateString("tr-TR"));
+                    $("#eventLocation").text(updatedData.location);
+                    $("#eventDescription").text(updatedData.description);
+
+                    // Modalı kapat
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('editEventModal'));
+                    modal.hide();
+                },
+                error: function (xhr) {
+                    const error = xhr.responseJSON?.message || "Etkinlik güncellenemedi.";
+                    alert(error);
+                }
+            });
+        }
+    </script>
+}

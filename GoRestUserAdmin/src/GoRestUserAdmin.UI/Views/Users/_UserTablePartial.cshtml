@@ -1,0 +1,55 @@
+﻿@model List<GoRestUserAdmin.UI.Models.UserDto>
+
+<table class="table table-bordered table-hover">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Ad Soyad</th>
+            <th>Email</th>
+            <th>Cinsiyet</th>
+            <th>Durum</th>
+            <th>İşlemler</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var user in Model)
+        {
+            <tr>
+                <td>@user.Id</td>
+                <td>@user.Name</td>
+                <td>@user.Email</td>
+                <td>@user.Gender</td>
+                <td>@user.Status</td>
+                <td>
+                    <button class="btn btn-sm btn-warning me-1" onclick="editUser(@user.Id)">Düzenle</button>
+                    <button class="btn btn-sm btn-danger" onclick="deleteUser(@user.Id)">Sil</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<script>
+    function editUser(id) {
+        $.get(`/Users/Edit/${id}`, function (html) {
+            $("#userFormContainer").html(html);
+            $("#userModalLabel").text("Kullanıcıyı Düzenle");
+            $("#userModal").modal("show");
+        });
+    }
+
+    function deleteUser(id) {
+        if (!confirm("Bu kullanıcı silinsin mi?")) return;
+
+        $.ajax({
+            url: `/Users/Delete/${id}`,
+            type: "DELETE",
+            success: function () {
+                $("#userTableContainer").load("/Users/PartialList");
+            },
+            error: function () {
+                alert("Silme işlemi başarısız oldu.");
+            }
+        });
+    }
+</script>

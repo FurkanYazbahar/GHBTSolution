@@ -1,0 +1,65 @@
+﻿@model GoRestUserAdmin.UI.Models.UserDto
+
+<form id="userForm">
+    <input type="hidden" name="id" value="@Model.Id" />
+
+    <div class="mb-3">
+        <label class="form-label">Ad Soyad</label>
+        <input type="text" class="form-control" name="name" value="@Model.Name" required />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Email</label>
+        <input type="email" class="form-control" name="email" value="@Model.Email" required />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Cinsiyet</label>
+        <select class="form-select" name="gender" required>
+            <option value="">Seçiniz</option>
+            <option value="male" selected="@(Model.Gender == "male" ? "selected" : "")">Erkek</option>
+            <option value="female" selected="@(Model.Gender == "female" ? "selected" : "")">Kadın</option>
+        </select>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Durum</label>
+        <select class="form-select" name="status" required>
+            <option value="">Seçiniz</option>
+            <option value="active" selected="@(Model.Status == "active" ? "selected" : "")">Aktif</option>
+            <option value="inactive" selected="@(Model.Status == "inactive" ? "selected" : "")">Pasif</option>
+        </select>
+    </div>
+    <div class="modal-footer px-0">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Kapat</button>
+        <button type="submit" class="btn btn-primary">Kaydet</button>
+    </div>
+</form>
+
+<script>
+    $("#userForm").on("submit", function (e) {
+        e.preventDefault();
+
+        const formData = {
+            id: parseInt($("[name='id']").val()) || 0,
+            name: $("[name='name']").val(),
+            email: $("[name='email']").val(),
+            gender: $("[name='gender']").val(),
+            status: $("[name='status']").val()
+        };
+
+        const method = formData.id > 0 ? "PUT" : "POST";
+        const url = formData.id > 0 ? "/Users/Edit" : "/Users/Create";
+
+        $.ajax({
+            url: url,
+            type: method,
+            contentType: "application/json",
+            data: JSON.stringify(formData),
+            success: function () {
+                $("#userModal").modal("hide");
+                $("#userTableContainer").load("/Users/PartialList");
+            },
+            error: function () {
+                alert("Kullanıcı kaydedilirken bir hata oluştu.");
+            }
+        });
+    });
+</script>

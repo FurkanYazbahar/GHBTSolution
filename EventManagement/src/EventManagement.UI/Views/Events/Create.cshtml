@@ -1,0 +1,71 @@
+﻿@model EventManagement.UI.Models.EventCreateViewModel
+
+@{
+    ViewData["Title"] = "Etkinlik Ekle";
+}
+
+<h2>Etkinlik Ekle</h2>
+
+<form asp-action="Create" method="post">
+    <div class="mb-3">
+        <label asp-for="Title" class="form-label"></label>
+        <input asp-for="Title" class="form-control" required/>
+        <span asp-validation-for="Title" class="text-danger"></span>
+        <div class="invalid-feedback">Başlık girilmelidir.</div>
+    </div>
+    <div class="mb-3">
+        <label asp-for="Date" class="form-label"></label>
+        <input asp-for="Date" class="form-control" type="date" required/>
+        <span asp-validation-for="Date" class="text-danger"></span>
+        <div class="invalid-feedback">Tarih seçilmelidir.</div>
+    </div>
+    <div class="mb-3">
+        <label asp-for="Location" class="form-label"></label>
+        <input asp-for="Location" class="form-control" required/>
+        <span asp-validation-for="Location" class="text-danger"></span>
+        <div class="invalid-feedback">Yer belirtilmelidir.</div>
+    </div>
+    <div class="mb-3">
+        <label asp-for="Description" class="form-label"></label>
+        <textarea asp-for="Description" class="form-control" required></textarea>
+        <span asp-validation-for="Description" class="text-danger"></span>
+        <div class="invalid-feedback">Açıklama gereklidir.</div>
+    </div>
+
+    <h5>Katılımcılar</h5>
+    <div class="mb-3">
+        @for (int i = 0; i < Model.Participants.Count; i++)
+        {
+            <div class="form-check">
+                <input type="checkbox"
+                       class="form-check-input"
+                       asp-for="Participants[i].IsSelected" />
+                <label class="form-check-label">@Model.Participants[i].Name</label>
+                <input type="hidden" asp-for="Participants[i].Id" />
+                <input type="hidden" asp-for="Participants[i].Name" />
+            </div>
+        }
+    </div>
+
+    <button type="submit" class="btn btn-primary">Oluştur</button>
+    <a asp-controller="Home" asp-action="Index" class="btn btn-secondary ms-2">Geri Dön</a>
+</form>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+        (function () {
+            'use strict';
+            const form = document.getElementById('eventCreateForm');
+            form.addEventListener('submit', function (event) {
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    form.classList.add('was-validated');
+                }
+            }, false);
+        })();
+    </script>
+}

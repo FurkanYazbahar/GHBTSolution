@@ -1,0 +1,41 @@
+﻿@model IEnumerable<EventManagement.UI.Models.EventListViewModel>
+
+@{
+    ViewData["Title"] = "Ana Sayfa";
+}
+
+<h2 class="mb-4">Planlanan Etkinlikler</h2>
+
+<a href="/Events/Create" class="btn btn-primary mb-3">Etkinlik Ekle</a>
+<a href="/Participants/Create" class="btn btn-secondary mb-3 ms-2">Katılımcı Ekle</a>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-warning">Henüz bir etkinlik oluşturulmamış.</div>
+}
+else
+{
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Başlık</th>
+                <th>Tarih</th>
+                <th>Yer</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var ev in Model)
+            {
+                <tr>
+                    <td>@ev.Title</td>
+                    <td>@ev.Date.ToString("dd.MM.yyyy")</td>
+                    <td>@ev.Location</td>
+                    <td>
+                        <a class="btn btn-sm btn-info" href="/Events/Details/@ev.Id">Detay</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

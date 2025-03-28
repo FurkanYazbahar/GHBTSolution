@@ -1,0 +1,11 @@
+﻿@model List<EventManagement.UI.Models.ParticipantViewModel>
+
+<ul class="list-group">
+    @foreach (var p in Model)
+    {
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+            <span>@p.FullName - @p.Email</span>
+            <button class="btn btn-sm btn-danger" onclick="removeParticipantUI('@p.Id')">Çıkar</button>
+        </li>
+    }
+</ul>
